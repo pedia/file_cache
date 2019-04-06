@@ -1,12 +1,13 @@
 import 'package:path_provider/path_provider.dart';
 import 'package:quiver/cache.dart';
+import 'package:flutter/foundation.dart';
 
 import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'consolidate_response.dart';
+// import 'consolidate_response.dart';
 
 /// A function that produces http response for [url],
 /// for when a [Cache] needs to populate an entry.
@@ -15,7 +16,15 @@ import 'consolidate_response.dart';
 /// [Future] which completes with the value asynchronously.
 typedef FutureOr<HttpClientResponse> Loader(String url);
 
-/// Stream util read some String unit [charCode]
+Future<HttpClientResponse> defaultLoader(String url) async {
+  final Uri uri = Uri.parse(url);
+  var httpClient = new HttpClient();
+
+  HttpClientRequest request = await httpClient.getUrl(uri);
+  return await request.close();
+}
+
+/// Stream util for ...
 Future<String> readUtil(
   RandomAccessFile file, {
   int charCode: 10, // LF
@@ -23,6 +32,10 @@ Future<String> readUtil(
   var bytes = <int>[];
   while (true) {
     final int char = await file.readByte();
+    if (char == -1) {
+      throw StateError("eof");
+    }
+
     if (char == charCode) break;
 
     bytes.add(char);
@@ -36,13 +49,13 @@ class CacheEntry {
     this.bytes,
     this.ctime,
     this.ttl,
-  });
+  }) : assert(ttl > 0);
 
   final String url;
   final DateTime ctime;
   final int ttl;
   final Uint8List bytes;
-  // mime type, maybe not necessary
+  // add mime type?
 
   int get length {
     return bytes != null ? bytes.lengthInBytes : 0;
@@ -88,30 +101,32 @@ class CacheEntry {
         loadContent ? await rf.read(rf.lengthSync() - rf.positionSync()) : null;
     await rf.close();
 
-    var entry = new CacheEntry(
+    completer.complete(CacheEntry(
       url: url,
       ctime: ctime,
       ttl: ttl,
       bytes: bytes,
-    );
-
-    completer.complete(entry);
+    ));
     return completer.future;
   }
 
-  Future<Null> writeTo(File file, {Encoding encoding: utf8}) async {
+  Future writeTo(File file, {Encoding encoding: utf8}) async {
     final Completer<Null> completer = new Completer<Null>();
 
     IOSink writer = file.openWrite(encoding: encoding);
 
-    await writer.writeln('url: $url');
-    await writer.writeln('length: $length');
-    await writer.writeln('ctime: ${ctime.toString()}');
-    await writer.writeln('ttl: $ttl');
-    await writer.add(bytes);
-    await writer.close();
+    writer.writeln('url: $url');
+    writer.writeln('length: $length');
+    writer.writeln('ctime: ${ctime.toString()}');
+    writer.writeln('ttl: $ttl');
+    if (bytes != null) {
+      writer.add(bytes);
+    }
 
-    completer.complete(null);
+    writer.close().then((_) {
+      completer.complete();
+    });
+
     return completer.future;
   }
 }
@@ -125,11 +140,13 @@ class CacheStats {
   int missInMemory = 0;
 
   /// Bytes of total local file
-  /// TODO: Initialize this in startup
   int bytesInFile = 0;
 
   /// Hit count of items in memory
   int hitMemory = 0;
+
+  /// Hit count of items in files
+  int hitFiles = 0;
 
   // Bytes read from file
   int bytesRead = 0;
@@ -142,6 +159,7 @@ class CacheStats {
     return "Bytes(Memory): $bytesInMemory\n"
         "Miss(Memory): $missInMemory\n"
         "Hit(Memory): $hitMemory\n"
+        "Hit(Files): $hitFiles\n"
         "Bytes(File): $bytesInFile\n"
         "Bytes Read from File: $bytesRead\n"
         "Bytes download: $bytesDownload";
@@ -161,7 +179,7 @@ class ScanResult {
 }
 
 class FileCache {
-  FileCache._({
+  FileCache({
     this.path,
     this.useMemory: false,
     this.loader,
@@ -169,6 +187,7 @@ class FileCache {
 
   final String path;
 
+  /// keep bytes in memory, default false
   final bool useMemory;
 
   final Cache _cache = new MapCache<String, CacheEntry>.lru(maximumSize: 300);
@@ -180,26 +199,38 @@ class FileCache {
   /// We can provider capabity for multi instance.
   /// This function ONLY for convenience
   static Future<FileCache> fromDefault({
-    Loader loader,
+    Loader loader: defaultLoader,
+    String path,
+    bool scan: false,
   }) async {
     if (_instance == null) {
-      Directory dir = await getTemporaryDirectory();
+      final Completer<FileCache> completer = Completer<FileCache>();
+      if (path == null) {
+        Directory dir = await getTemporaryDirectory();
+        path = "${dir.path}/cache2";
+      }
 
-      _instance = new FileCache._(
-        path: "${dir.path}/cache2",
+      final FileCache fileCache = new FileCache(
+        path: path,
         useMemory: false,
         loader: loader,
       );
 
-      _instance.scanFolder().then((ScanResult res) {
-        // TODO: log print("FileCache in scan, delete ${res.deleteCount} file.");
-        _instance.stats.bytesInFile = res.bytes;
-      });
+      if (scan) {
+        fileCache.scanFolder().then((ScanResult res) {
+          print("FileCache in scan, delete ${res.deleteCount} file.");
+          fileCache.stats.bytesInFile = res.bytes;
+          completer.complete(fileCache);
+        });
+      } else {
+        completer.complete(fileCache);
+      }
+      _instance = completer.future;
     }
     return _instance;
   }
 
-  static FileCache _instance;
+  static Future<FileCache> _instance;
 
   Future<ScanResult> scanFolder() async {
     int fileCount = 0;
@@ -212,13 +243,13 @@ class FileCache {
         followLinks: false,
       )) {
         FileStat stat = await e.stat();
-        if (stat.type == FileSystemEntityType.DIRECTORY) continue;
+        if (stat.type == FileSystemEntityType.directory) continue;
 
         fileCount += 1;
         bytes += stat.size;
 
         CacheEntry entry;
-        File file = new File(e.path);
+        File file = File(e.path);
         try {
           entry = await CacheEntry.fromFile(
             file,
@@ -254,7 +285,7 @@ class FileCache {
   /// Parse http header Cache-Control: max-age=300
   /// return 300 expire seconds
   int cacheableSeconds(HttpClientResponse response) {
-    String head = response.headers.value(HttpHeaders.CACHE_CONTROL);
+    String head = response.headers.value(HttpHeaders.cacheControlHeader);
     if (head != null) {
       List<String> kv = head.split('=');
       if (kv.isNotEmpty) {
@@ -263,6 +294,15 @@ class FileCache {
       }
     }
     return null;
+  }
+
+  Future<bool> remove(String url) async {
+    assert(url is String);
+
+    final int key = url.hashCode;
+    final File file = new File("$path/${key % 10}/$key");
+    await file.delete(recursive: false);
+    return true;
   }
 
   Future<CacheEntry> load(String url) async {
@@ -278,6 +318,7 @@ class FileCache {
       try {
         entry = await CacheEntry.fromFile(file);
         stats.bytesRead += entry.length;
+        stats.hitFiles += 1;
         completer.complete(entry);
       } catch (error) {
         await file.delete(recursive: false);
@@ -289,7 +330,7 @@ class FileCache {
     return completer.future;
   }
 
-  /// Store to cache folder
+  //
   void store(String url, CacheEntry entry, {Encoding encoding: utf8}) async {
     final int key = url.hashCode;
 
@@ -307,14 +348,18 @@ class FileCache {
     });
   }
 
-  Future<Uint8List> getBytes(String url, {Encoding storeEncoding: utf8}) async {
+  Future<Uint8List> getBytes(
+    String url, {
+    Encoding storeEncoding: utf8,
+    int forceCache,
+  }) async {
     Completer<Uint8List> completer = new Completer<Uint8List>();
 
     CacheEntry entry;
 
     // 1 memory cache first
     if (useMemory) {
-      entry = await _cache.get(url);
+      entry = await _cache.get(url) as CacheEntry;
       if (entry != null && entry.isValid()) {
         stats.hitMemory += 1;
         completer.complete(entry.bytes);
@@ -345,7 +390,7 @@ class FileCache {
 
     final HttpClientResponse response = await loader(url);
 
-    if (response.statusCode != HttpStatus.OK)
+    if (response.statusCode != HttpStatus.ok)
       throw new Exception(
           'HTTP request failed, statusCode: ${response?.statusCode}, $url');
 
@@ -357,7 +402,7 @@ class FileCache {
 
     completer.complete(bytes);
 
-    int ttl = cacheableSeconds(response);
+    int ttl = forceCache ?? cacheableSeconds(response);
     if (ttl != null) {
       store(
         url,
@@ -369,6 +414,8 @@ class FileCache {
         ),
         encoding: storeEncoding,
       );
+    } else {
+      print("filecache: not cached $url");
     }
 
     return completer.future;
@@ -377,10 +424,11 @@ class FileCache {
   Future<Map> getJson(String url, {Encoding encoding: utf8}) async {
     Completer<Map> completer = new Completer<Map>();
 
-    Uint8List bytes = await getBytes(url, storeEncoding: encoding);
-
-    String str = encoding.decode(bytes);
-    completer.complete(json.decode(str));
+    getBytes(url, storeEncoding: encoding).then((bytes) {
+      String str = encoding.decode(bytes);
+      // String str = new String.fromCharCodes(bytes);
+      completer.complete(json.decode(str));
+    });
 
     return completer.future;
   }

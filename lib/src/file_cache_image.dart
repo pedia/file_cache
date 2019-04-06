@@ -12,8 +12,7 @@ class FileCacheImage extends ImageProvider<FileCacheImage> {
   const FileCacheImage(
     this.url, {
     this.scale: 1.0,
-  })
-      : assert(url != null),
+  })  : assert(url != null),
         assert(scale != null);
 
   /// The URL from which the image will be fetched.
