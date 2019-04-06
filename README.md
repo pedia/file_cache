@@ -2,37 +2,26 @@
 
 File cached Json,Buffer,FileCacheImage for flutter package project.
 
-<font color="green">Dart2 Ready</font>
+Dart2 Ready
 
 ## Getting Started
 
 ```dart
 import 'package:file_cache/file_cache.dart';
 
-// Provider a Loader function for Http request;
-Future<HttpClientResponse> loader(String url) async {
-  final Uri uri = Uri.parse(url);
-
-  HttpClientRequest request = await httpClient.getUrl(uri);
-  return await request.close();
-}
-
 // Create the instance of FileCache
-FileCache fileCache = await FileCache.fromDefault(
-  httpClient: httpClient,
-  loader: loader,
-);
+FileCache fileCache = await FileCache.fromDefault();
 
 // Usage: get Json map
-Map data = await fileCache.getJson(url);
+Map data = await fileCache.getJson('http://httpbin.org/cache/600');
 
 // Usage: get bytes
-Uint8List bytes = await fileCache.getBytes(url);
+Uint8List bytes = await fileCache.getBytes('http://httpbin.org/images/jpeg');
 
 // Usage: replace NetworkImage
 new Image(
     fit: BoxFit.cover,
-    image: new FileCacheImage(url),
+    image: new FileCacheImage('http://httpbin.org/images/jpeg'),
 );
 
 // Usage: clean file cache
@@ -43,6 +32,7 @@ print(fileCache.stats.toString());
 // "Bytes(Memory): $bytesInMemory\n"
 // "Miss(Memory): $missInMemory\n"
 // "Hit(Memory): $hitMemory\n"
+// "Hit(Files): $hitFiles\n"
 // "Bytes(File): $bytesInFile\n"
 // "Bytes Read from File: $bytesRead\n"
 // "Bytes download: $bytesDownload";

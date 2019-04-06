@@ -4,11 +4,15 @@ version: 0.0.2
 author: Ken <kenshao@gmail.com>
 homepage: http://github.com/pedia/file_cache
 
+environment:
+  sdk: ">=2.1.0 <3.0.0"
+
 dependencies:
   flutter:
     sdk: flutter
 
-  path_provider:
+  quiver: ^2.0.2
+  path_provider:  ^0.5.0+1
 
 dev_dependencies:
   flutter_test:
