@@ -1,8 +1,8 @@
 name: file_cache
 description: File cached Json,Buffer,FileCacheImage for flutter package project.
-version: 0.1.0
+version: 0.1.1
 author: Ken <kenshao@gmail.com>
-homepage: http://github.com/pedia/file_cache
+homepage: https://github.com/pedia/file_cache
 
 environment:
   sdk: ">=2.1.0 <3.0.0"
