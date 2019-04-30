@@ -179,12 +179,19 @@ class ScanResult {
 }
 
 class FileCache {
+  /// Force cache in seconds, default null.
+  /// Force cached all url, should:
+  ///   FileCache.forceCacheSeconds = 86400 * 100;
+  /// Cache url 100 days.
+  static int forceCacheSeconds;
+
   FileCache({
     this.path,
     this.useMemory: false,
     this.loader,
   });
 
+  /// cache folder
   final String path;
 
   /// keep bytes in memory, default false
@@ -218,7 +225,7 @@ class FileCache {
 
       if (scan) {
         fileCache.scanFolder().then((ScanResult res) {
-          print("FileCache in scan, delete ${res.deleteCount} file.");
+          debugPrint("FileCache in scan, delete ${res.deleteCount} file.");
           fileCache.stats.bytesInFile = res.bytes;
           completer.complete(fileCache);
         });
@@ -289,7 +296,10 @@ class FileCache {
     if (head != null) {
       List<String> kv = head.split('=');
       if (kv.isNotEmpty) {
-        int seconds = int.parse(kv[1]);
+        int seconds = 0;
+        try {
+          seconds = int.parse(kv[1]);
+        } catch (e) {}
         if (seconds > 0) return seconds;
       }
     }
@@ -331,7 +341,11 @@ class FileCache {
   }
 
   //
-  void store(String url, CacheEntry entry, {Encoding encoding: utf8}) async {
+  void store(
+    String url,
+    CacheEntry entry, {
+    Encoding encoding: utf8,
+  }) async {
     final int key = url.hashCode;
 
     if (useMemory) {
@@ -400,11 +414,13 @@ class FileCache {
 
     stats.bytesDownload += bytes.lengthInBytes;
 
-    completer.complete(bytes);
+    int ttl = cacheableSeconds(response);
+    if (ttl == null && FileCache.forceCacheSeconds != null) {
+      ttl = FileCache.forceCacheSeconds;
+    }
 
-    int ttl = forceCache ?? cacheableSeconds(response);
     if (ttl != null) {
-      store(
+      await store(
         url,
         new CacheEntry(
           url: url,
@@ -415,8 +431,9 @@ class FileCache {
         encoding: storeEncoding,
       );
     } else {
-      print("filecache: not cached $url");
+      debugPrint("filecache: not cached $url");
     }
+    completer.complete(bytes);
 
     return completer.future;
   }
