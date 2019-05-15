@@ -29,20 +29,21 @@ class FileCacheImage extends ImageProvider<FileCacheImage> {
   @override
   ImageStreamCompleter load(FileCacheImage key) {
     return new MultiFrameImageStreamCompleter(
-        codec: _loadAsync(key),
-        scale: key.scale,
-        informationCollector: (StringBuffer information) {
-          information.writeln('Image provider: $this');
-          information.write('Image key: $key');
-        });
+      codec: _loadAsync(key),
+      scale: key.scale,
+    );
   }
 
   Future<ui.Codec> _loadAsync(FileCacheImage key) async {
     assert(key == this);
     FileCache fileCache = await FileCache.fromDefault();
-    final Uint8List bytes = await fileCache.getBytes(key.url);
 
-    return await ui.instantiateImageCodec(bytes);
+    try {
+      final Uint8List bytes = await fileCache.getBytes(key.url);
+      return await ui.instantiateImageCodec(bytes);
+    } catch (error) {
+      return null;
+    }
   }
 
   @override

@@ -341,7 +341,7 @@ class FileCache {
   }
 
   //
-  void store(
+  Future<void> store(
     String url,
     CacheEntry entry, {
     Encoding encoding: utf8,
@@ -410,7 +410,7 @@ class FileCache {
 
     final Uint8List bytes = await consolidateHttpClientResponseBytes(response);
     if (bytes.lengthInBytes == 0)
-      throw new Exception('NetworkImage is an empty file: $url');
+      throw new Exception('FileCache request an empty file: $url');
 
     stats.bytesDownload += bytes.lengthInBytes;
 
@@ -438,15 +438,17 @@ class FileCache {
     return completer.future;
   }
 
-  Future<Map> getJson(String url, {Encoding encoding: utf8}) async {
-    Completer<Map> completer = new Completer<Map>();
+  Future<String> getString(String url, {Encoding encoding: utf8}) async {
+    Completer<String> completer = new Completer<String>();
 
     getBytes(url, storeEncoding: encoding).then((bytes) {
-      String str = encoding.decode(bytes);
-      // String str = new String.fromCharCodes(bytes);
-      completer.complete(json.decode(str));
+      completer.complete(encoding.decode(bytes));
     });
 
     return completer.future;
+  }
+
+  Future<Map> getJson(String url, {Encoding encoding: utf8}) async {
+    return json.decode(await getString(url, encoding: encoding));
   }
 }
