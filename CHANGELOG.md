@@ -1,3 +1,7 @@
+## 0.1.5
+
+* ImageProvide::load
+
 ## 0.1.4
 
 * add `FileCache.getString`
