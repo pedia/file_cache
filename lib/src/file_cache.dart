@@ -177,12 +177,6 @@ class ScanResult {
 }
 
 class FileCache {
-  /// Force cache in seconds, default null.
-  /// Force cached all url, should:
-  ///   FileCache.forceCacheSeconds = 86400 * 100;
-  /// Cache url 100 days.
-  static int forceCacheSeconds;
-
   FileCache({
     required this.path,
     this.useMemory: false,
