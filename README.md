@@ -1,8 +1,8 @@
 # file_cache
 
-File cached Json,Buffer,FileCacheImage for flutter package project.
+Cached Json, Bytes(Image) in file for Http response.
 
-Dart2 Ready
+Dart2 and null-safety ready.
 
 ## Getting Started
 

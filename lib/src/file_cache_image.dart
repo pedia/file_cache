@@ -12,8 +12,7 @@ class FileCacheImage extends ImageProvider<FileCacheImage> {
   const FileCacheImage(
     this.url, {
     this.scale: 1.0,
-  })  : assert(url != null),
-        assert(scale != null);
+  });
 
   /// The URL from which the image will be fetched.
   final String url;
@@ -23,12 +22,12 @@ class FileCacheImage extends ImageProvider<FileCacheImage> {
 
   @override
   Future<FileCacheImage> obtainKey(ImageConfiguration configuration) {
-    return new SynchronousFuture<FileCacheImage>(this);
+    return SynchronousFuture<FileCacheImage>(this);
   }
 
   @override
   ImageStreamCompleter load(FileCacheImage key, DecoderCallback decode) {
-    return new MultiFrameImageStreamCompleter(
+    return MultiFrameImageStreamCompleter(
       codec: _loadAsync(key),
       scale: key.scale,
     );
@@ -38,12 +37,8 @@ class FileCacheImage extends ImageProvider<FileCacheImage> {
     assert(key == this);
     FileCache fileCache = await FileCache.fromDefault();
 
-    try {
-      final Uint8List bytes = await fileCache.getBytes(key.url);
-      return await ui.instantiateImageCodec(bytes);
-    } catch (error) {
-      return null;
-    }
+    final Uint8List bytes = await fileCache.getBytes(key.url);
+    return await ui.instantiateImageCodec(bytes);
   }
 
   @override
