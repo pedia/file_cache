@@ -180,7 +180,7 @@ class FileCache {
   FileCache({
     required this.path,
     this.useMemory: false,
-    required this.loader,
+    this.loader = defaultLoader,
   });
 
   /// cache folder
@@ -284,16 +284,20 @@ class FileCache {
   /// Parse http header Cache-Control: max-age=300
   /// return 300 expire seconds
   int? cacheableSeconds(HttpClientResponse response) {
-    String? head = response.headers.value(HttpHeaders.cacheControlHeader);
-    if (head != null) {
-      List<String> kv = head.split('=');
-      if (kv.isNotEmpty) {
-        int seconds = 0;
-        try {
-          seconds = int.parse(kv[1]);
-        } catch (e) {}
-        if (seconds > 0) return seconds;
-      }
+    String? val = response.headers.value(HttpHeaders.cacheControlHeader);
+    if (val != null) {
+      return extractSeconds(val);
+    }
+  }
+
+  int? extractSeconds(String val) {
+    List<String> kv = val.split('=');
+    if (kv.isNotEmpty) {
+      int seconds = 0;
+      try {
+        seconds = int.parse(kv[1].trim());
+      } catch (e) {}
+      if (seconds > 0) return seconds;
     }
   }
 
