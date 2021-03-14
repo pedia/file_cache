@@ -388,11 +388,11 @@ class FileCache {
 
     assert(!completer.isCompleted);
 
-    final HttpClientResponse response = await loader(url);
+    final HttpClientResponse? response = await loader(url);
 
-    if (response.statusCode != HttpStatus.ok)
+    if (response == null || response.statusCode != HttpStatus.ok)
       throw Exception(
-          'HTTP request failed, statusCode: ${response.statusCode}, $url');
+          'HTTP request failed, status code: ${response?.statusCode}, url: $url');
 
     final Uint8List bytes = await consolidateHttpClientResponseBytes(response);
     if (bytes.lengthInBytes == 0)
