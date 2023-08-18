@@ -22,7 +22,7 @@ class FileCacheImage extends ImageProvider<FileCacheImage> {
   }
 
   @override
-  ImageStreamCompleter load(FileCacheImage key, DecoderCallback decode) {
+  ImageStreamCompleter loadImage(FileCacheImage key, ImageDecoderCallback decode) {
     return MultiFrameImageStreamCompleter(
       codec: _loadAsync(key),
       scale: key.scale,

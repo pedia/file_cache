@@ -193,7 +193,7 @@ class FileCache {
   Future<void> store(
     String url,
     CacheEntry entry, {
-    Encoding encoding: utf8,
+    Encoding encoding = utf8,
   }) async {
     final int key = url.hashCode;
 
@@ -207,7 +207,7 @@ class FileCache {
 
   Future<Uint8List> getBytes(
     String url, {
-    Encoding storeEncoding: utf8,
+    Encoding storeEncoding = utf8,
     int? forceCache,
   }) async {
     Completer<Uint8List> completer = Completer<Uint8List>();

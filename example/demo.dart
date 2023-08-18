@@ -48,9 +48,10 @@ class _FileCacheTestFrameState extends State<FileCacheTestFrame> {
                 Text('map: ${map == null ? null : map!["result"][0]["name"]}'),
           ),
 
-          Image(
+          const Image(
               image: FileCacheImage(
-            'http://httpbin.org/image/jpeg',
+            'https://assets.msn.com/weathermapdata/1/static/background/v2.0/jpg/sunny.jpg',
+            scale: 1.9,
           )),
 
           //
@@ -62,7 +63,9 @@ class _FileCacheTestFrameState extends State<FileCacheTestFrame> {
 }
 
 void main() async {
-  FileCache fileCache = await FileCache.fromDefault();
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final fileCache = await FileCache.fromDefault();
   print(fileCache.path);
   runApp(MaterialApp(home: FileCacheTestFrame()));
 }

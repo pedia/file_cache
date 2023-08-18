@@ -1,3 +1,7 @@
+## 0.3.0
+
+* upgrade Dart 3
+
 ## 0.2.0
 
 * Null-safety migrate
