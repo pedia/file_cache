@@ -1,6 +1,6 @@
 import 'package:path_provider/path_provider.dart';
 import 'package:quiver/cache.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' show consolidateHttpClientResponseBytes;
 
 import 'dart:async';
 import 'dart:io';
@@ -25,7 +25,7 @@ Future<HttpClientResponse> defaultLoader(String url) async {
 /// Stream util for ...
 Future<String> readUtil(
   RandomAccessFile file, {
-  int charCode: 10, // LF
+  int charCode = 10, // LF
 }) async {
   var bytes = <int>[];
   while (true) {
@@ -198,9 +198,9 @@ class FileCache {
   /// We can provider capabity for multi instance.
   /// This function ONLY for convenience
   static Future<FileCache> fromDefault({
-    Loader loader: defaultLoader,
+    Loader loader = defaultLoader,
     String? path,
-    bool scan: false,
+    bool scan = false,
   }) async {
     if (_instance == null) {
       final Completer<FileCache> completer = Completer<FileCache>();
@@ -217,7 +217,7 @@ class FileCache {
 
       if (scan) {
         fileCache.scanFolder().then((ScanResult res) {
-          debugPrint("FileCache in scan, delete ${res.deleteCount} file.");
+          print("FileCache in scan, delete ${res.deleteCount} file.");
           fileCache.stats.bytesInFile = res.bytes;
           completer.complete(fileCache);
         });
@@ -288,6 +288,7 @@ class FileCache {
     if (val != null) {
       return extractSeconds(val);
     }
+    return null;
   }
 
   int? extractSeconds(String val) {
@@ -299,11 +300,10 @@ class FileCache {
       } catch (e) {}
       if (seconds > 0) return seconds;
     }
+    return null;
   }
 
   Future<bool> remove(String url) async {
-    assert(url is String);
-
     final int key = url.hashCode;
     final File file = File("$path/${key % 10}/$key");
     await file.delete(recursive: false);
@@ -311,8 +311,6 @@ class FileCache {
   }
 
   Future<CacheEntry?> load(String url) async {
-    assert(url is String);
-
     final Completer<CacheEntry?> completer = Completer<CacheEntry?>();
     final int key = url.hashCode;
 
@@ -417,14 +415,14 @@ class FileCache {
         encoding: storeEncoding,
       );
     } else {
-      debugPrint("filecache: not cached $url");
+      print("filecache: not cached $url");
     }
     completer.complete(bytes);
 
     return completer.future;
   }
 
-  Future<String> getString(String url, {Encoding encoding: utf8}) async {
+  Future<String> getString(String url, {Encoding encoding = utf8}) async {
     Completer<String> completer = new Completer<String>();
 
     getBytes(url, storeEncoding: encoding).then((bytes) {
@@ -434,7 +432,7 @@ class FileCache {
     return completer.future;
   }
 
-  Future<Map> getJson(String url, {Encoding encoding: utf8}) async {
+  Future<Map> getJson(String url, {Encoding encoding = utf8}) async {
     return json.decode(await getString(url, encoding: encoding));
   }
 }

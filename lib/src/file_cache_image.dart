@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:flutter/painting.dart';
 import 'package:flutter/foundation.dart';
@@ -9,10 +8,7 @@ import 'file_cache.dart';
 
 class FileCacheImage extends ImageProvider<FileCacheImage> {
   /// Creates an ImageProvider which loads an image from the [url], using the [scale].
-  const FileCacheImage(
-    this.url, {
-    this.scale: 1.0,
-  });
+  const FileCacheImage(this.url, {this.scale = 1});
 
   /// The URL from which the image will be fetched.
   final String url;
@@ -49,7 +45,7 @@ class FileCacheImage extends ImageProvider<FileCacheImage> {
   }
 
   @override
-  int get hashCode => hashValues(url, scale);
+  int get hashCode => Object.hash(url, scale);
 
   @override
   String toString() => '$runtimeType("$url", scale: $scale)';
