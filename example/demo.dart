@@ -8,7 +8,6 @@ class FileCacheTestFrame extends StatefulWidget {
 class _FileCacheTestFrameState extends State<FileCacheTestFrame> {
   FileCache? fileCache;
   Map? map;
-  CacheEntry? entry;
 
   @override
   initState() {
@@ -29,12 +28,10 @@ class _FileCacheTestFrameState extends State<FileCacheTestFrame> {
           ElevatedButton(
             onPressed: () {
               fileCache?.load('http://httpbin.org/cache/60').then((resp) {
-                setState(() {
-                  entry = resp;
-                });
+                setState(() {});
               });
             },
-            child: Text("entry ttl: ${entry?.ttl}"),
+            child: Text("load an url"),
           ),
 
           // getJson
