@@ -1,3 +1,9 @@
+## 0.3.0
+
+* Split to `file_cache` and `file_cache_flutter`
+* `file_cache` not worked in mode of none flutter
+* refine to stats, store
+
 ## 0.2.0
 
 * Null-safety migrate

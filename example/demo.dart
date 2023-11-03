@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:file_cache/file_cache.dart';
+import 'package:file_cache/file_cache_flutter.dart';
 
 class FileCacheTestFrame extends StatefulWidget {
   createState() => _FileCacheTestFrameState();
@@ -8,13 +8,12 @@ class FileCacheTestFrame extends StatefulWidget {
 class _FileCacheTestFrameState extends State<FileCacheTestFrame> {
   FileCache? fileCache;
   Map? map;
-  CacheEntry? entry;
 
   @override
   initState() {
     super.initState();
 
-    FileCache.fromDefault().then((instance) {
+    FileCacheFlutter.fromDefault().then((instance) {
       fileCache = instance;
     });
   }
@@ -29,12 +28,10 @@ class _FileCacheTestFrameState extends State<FileCacheTestFrame> {
           ElevatedButton(
             onPressed: () {
               fileCache?.load('http://httpbin.org/cache/60').then((resp) {
-                setState(() {
-                  entry = resp;
-                });
+                setState(() {});
               });
             },
-            child: Text("entry ttl: ${entry?.ttl}"),
+            child: Text(""),
           ),
 
           // getJson
@@ -65,7 +62,5 @@ class _FileCacheTestFrameState extends State<FileCacheTestFrame> {
 }
 
 void main() async {
-  FileCache fileCache = await FileCache.fromDefault();
-  print(fileCache.path);
   runApp(MaterialApp(home: FileCacheTestFrame()));
 }
