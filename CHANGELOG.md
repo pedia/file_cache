@@ -1,4 +1,4 @@
-## 0.3.0
+## 0.4.0
 
 * Split to `file_cache` and `file_cache_flutter`
 * `file_cache` not worked in mode of none flutter
