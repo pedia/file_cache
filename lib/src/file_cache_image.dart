@@ -53,7 +53,7 @@ class FileCacheImage extends ImageProvider<FileCacheImage> {
     assert(key == this);
     FileCache fileCache = await FileCacheFlutter.fromDefault();
 
-    final Uint8List bytes = await fileCache.getBytes(key.url);
+    final Uint8List bytes = await fileCache.getBytes(Uri.parse(key.url));
     return await ui.instantiateImageCodec(bytes);
   }
 

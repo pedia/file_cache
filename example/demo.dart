@@ -37,7 +37,7 @@ class _FileCacheTestFrameState extends State<FileCacheTestFrame> {
           // getJson
           ElevatedButton(
             onPressed: () {
-              fileCache?.getJson('http://httpbin.org/cache/600').then((resp) {
+              fileCache?.getJson(Uri.parse('http://httpbin.org/cache/600')).then((resp) {
                 setState(() {
                   print(">> got $resp");
                   map = resp;

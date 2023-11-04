@@ -10,10 +10,9 @@ import 'stats.dart';
 import 'store.dart';
 import 'header.dart';
 
-var log = Logger('http_cache');
+var log = Logger('file_cache');
 
-Future<http.Response> defaultLoader(String url) async {
-  final Uri uri = Uri.parse(url);
+Future<http.Response> defaultLoader(Uri uri) async {
   var client = http.Client();
 
   return await client.get(uri);
@@ -25,7 +24,7 @@ Future<http.Response> defaultLoader(String url) async {
 /// The loader function should either return a value synchronously or a
 /// [Future] which completes with the value asynchronously.
 /// Use 'package:http/http.dart' instead 'dart:io'
-typedef FutureOr<http.Response> Loader(String url);
+typedef FutureOr<http.Response> Loader(Uri url);
 
 class FileCache {
   static Completer<FileCache>? _completer;
@@ -48,13 +47,15 @@ class FileCache {
   }
 
   Future<Uint8List> getBytes(
-    String url, {
+    Uri uri, {
     Encoding storeEncoding = utf8,
     int? forceCache,
   }) async {
     Completer<Uint8List> completer = Completer<Uint8List>();
 
     Entry? entry;
+
+    final url = uri.toString();
 
     // 1 memory cache first
     if (_memoryStore != null) {
@@ -82,7 +83,7 @@ class FileCache {
 
     assert(!completer.isCompleted);
 
-    final response = await loader(url);
+    final response = await loader(uri);
 
     // TODO: cache 200, 204, 301, 302
     if (response.statusCode != HttpStatus.ok)
@@ -112,18 +113,12 @@ class FileCache {
     return completer.future;
   }
 
-  Future<Map> getJson(String url, {Encoding encoding = utf8}) async {
-    return json.decode(await getString(url, encoding: encoding));
+  Future<Map> getJson(Uri uri, {Encoding encoding = utf8}) async {
+    return json.decode(await getString(uri, encoding: encoding));
   }
 
-  Future<String> getString(String url, {Encoding encoding = utf8}) {
-    Completer<String> completer = new Completer<String>();
-
-    getBytes(url, storeEncoding: encoding).then((bytes) {
-      completer.complete(encoding.decode(bytes));
-    });
-
-    return completer.future;
+  Future<String> getString(Uri uri, {Encoding encoding = utf8}) async {
+    return encoding.decode(await getBytes(uri, storeEncoding: encoding));
   }
 
   Future<Entry?> load(String url) => _fileStore.load(url);

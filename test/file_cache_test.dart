@@ -8,7 +8,7 @@ void main() {
 
     await fileCache.clean();
 
-    Map map = await fileCache.getJson('https://httpbin.org/cache/600?a=b');
+    Map map = await fileCache.getJson(Uri.parse('https://httpbin.org/cache/600?a=b'));
     expect(map.length, 4);
     expect(map['args']['a'], 'b');
     expect(fileCache.stats.hitFiles, 0);
@@ -17,7 +17,7 @@ void main() {
   test('scan', () async {
     final fileCache = await FileCache.from(path: "cache3", scan: true);
 
-    Map map = await fileCache.getJson('https://httpbin.org/cache/600?a=b');
+    Map map = await fileCache.getJson(Uri.parse('https://httpbin.org/cache/600?a=b'));
     expect(map.length, 4);
     expect(map['args']['a'], 'b');
     expect(fileCache.stats.hitFiles, 1);

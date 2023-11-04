@@ -1,6 +1,6 @@
 import 'package:universal_io/io.dart';
 
-/// Parse http header, extract cache time
+/// Extract cache time from http headers
 ///
 ///   Cache-Control: max-age=300
 ///   Age: 100
