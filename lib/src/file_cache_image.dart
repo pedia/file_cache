@@ -11,24 +11,20 @@ import 'file_cache.dart';
 
 class FileCacheFlutter {
   static Future<FileCache> fromDefault({
-    Loader loader = defaultLoader,
+    Fetcher fetcher = defaultFetcher,
     String? path,
-    bool scan = false,
   }) async {
     if (path == null) {
       Directory dir = await getTemporaryDirectory();
       path = p.join(dir.path, 'cache2');
     }
-    return FileCache.from(loader:loader,path: path, scan: scan);
+    return FileCache.from(path: path, fetcher: fetcher);
   }
 }
 
 class FileCacheImage extends ImageProvider<FileCacheImage> {
   /// Creates an ImageProvider which loads an image from the [url], using the [scale].
-  const FileCacheImage(
-    this.url, {
-    this.scale: 1.0,
-  });
+  const FileCacheImage(this.url, {this.scale = 1.0});
 
   /// The URL from which the image will be fetched.
   final String url;
@@ -56,17 +52,4 @@ class FileCacheImage extends ImageProvider<FileCacheImage> {
     final Uint8List bytes = await fileCache.getBytes(Uri.parse(key.url));
     return await ui.instantiateImageCodec(bytes);
   }
-
-  @override
-  bool operator ==(dynamic other) {
-    if (other.runtimeType != runtimeType) return false;
-    final FileCacheImage typedOther = other;
-    return url == typedOther.url && scale == typedOther.scale;
-  }
-
-  @override
-  int get hashCode => hashValues(url, scale);
-
-  @override
-  String toString() => '$runtimeType("$url", scale: $scale)';
 }

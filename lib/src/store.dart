@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
-import 'package:quiver/cache.dart';
 import 'package:universal_io/io.dart';
 import 'stats.dart';
 
@@ -215,20 +214,4 @@ class FileStore {
     });
     return completer.future;
   }
-}
-
-class MemoryStore {
-  MemoryStore({int maximumSize = 1000})
-      : _cache = MapCache<String, Entry>.lru(maximumSize: maximumSize);
-
-  final MapCache<String, Entry> _cache;
-
-  Future<Entry?> load(String url) => _cache.get(url);
-
-  Future<void> store(Entry entry, {Encoding encoding = utf8}) =>
-      _cache.set(entry.url, entry);
-
-  Future<void> remove(String url) => _cache.invalidate(url);
-
-  Future<void> clean() async {}
 }

@@ -10,41 +10,34 @@ import 'stats.dart';
 import 'store.dart';
 import 'header.dart';
 
-var log = Logger('file_cache');
+final log = Logger('fcache');
 
-Future<http.Response> defaultLoader(Uri uri) async {
-  var client = http.Client();
-
-  return await client.get(uri);
-}
-
-/// A function that produces http response for [url],
-/// for when a [Cache] needs to populate an entry.
+/// [Fetcher] is function that produce http response for [url].
+/// When cache not exists, [Fetcher] will be called.
 ///
-/// The loader function should either return a value synchronously or a
+/// The fetcher function should either return a value synchronously or a
 /// [Future] which completes with the value asynchronously.
 /// Use 'package:http/http.dart' instead 'dart:io'
-typedef FutureOr<http.Response> Loader(Uri url);
+typedef FutureOr<http.Response> Fetcher(Uri url);
 
+Future<http.Response> defaultFetcher(Uri uri) {
+  return http.Client().get(uri);
+}
+
+///
 class FileCache {
-  static Completer<FileCache>? _completer;
-
-  late CacheStats stats; // = CacheStats();
-  late MemoryStore? _memoryStore;
-  late FileStore _fileStore;
-
-  /// Load (Http Response) if file not exists.
-  final Loader loader;
-
   FileCache({
     required String path,
-    bool useMemory = false,
-    this.loader = defaultLoader,
+    this.fetcher = defaultFetcher,
   }) {
     stats = CacheStats();
-    _memoryStore = useMemory ? MemoryStore() : null;
     _fileStore = FileStore(path: path, stats: stats);
   }
+
+  final Fetcher fetcher;
+
+  late CacheStats stats;
+  late FileStore _fileStore;
 
   Future<Uint8List> getBytes(
     Uri uri, {
@@ -57,33 +50,16 @@ class FileCache {
 
     final url = uri.toString();
 
-    // 1 memory cache first
-    if (_memoryStore != null) {
-      entry = await _memoryStore?.load(url);
-      if (entry != null && entry.isValid()) {
-        stats.hitMemory += 1;
-        completer.complete(entry.bytes);
-        return completer.future;
-      }
-    }
-
     // 2 local file cache
     entry = await _fileStore.load(url);
     if (entry != null && entry.isValid()) {
-      if (_memoryStore != null) {
-        stats.missInMemory += 1;
-        _memoryStore?.store(entry).then((_) {
-          stats.bytesInMemory += entry!.length;
-        });
-      }
-
       completer.complete(entry.bytes);
       return completer.future;
     }
 
     assert(!completer.isCompleted);
 
-    final response = await loader(uri);
+    final response = await fetcher(uri);
 
     // TODO: cache 200, 204, 301, 302
     if (response.statusCode != HttpStatus.ok)
@@ -127,26 +103,17 @@ class FileCache {
 
   Future<void> clean() => _fileStore.clean();
 
-  /// Provider global instance
-  static Future<FileCache> from({
-    Loader loader = defaultLoader,
-    required String path,
-    bool scan = false,
-  }) async {
-    if (_completer == null) {
-      final completer = Completer<FileCache>();
-      final fileCache = FileCache(
-        path: path,
-        useMemory: false,
-        loader: loader,
-      );
+  Future<ScanResult> scan() => _fileStore.scan();
 
-      if (scan) {
-        fileCache._fileStore.scan();
-      }
-      completer.complete(fileCache);
-      _completer = completer;
+  /// Provider global instance
+  static FileCache? _instance;
+  static FileCache from(
+      {Fetcher fetcher = defaultFetcher, required String path}) {
+    if (_instance == null) {
+      final fc = FileCache(path: path, fetcher: fetcher);
+
+      _instance = fc;
     }
-    return _completer!.future;
+    return _instance!;
   }
 }
