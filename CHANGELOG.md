@@ -1,6 +1,18 @@
-## 0.3.0
+## 2.0.0
 
-* upgrade Dart 3
+* [break change] refine to `FileCache`(for Dart project), `FileCacheFlutter`
+* expose FileStore for read and write `http.Response`
+
+## 0.6.0
+
+* [break change] remove memory store
+* [break change] FileCache remove scan and async
+
+## 0.4.0
+
+* Split to `file_cache` and `file_cache_flutter`
+* `file_cache` not worked in mode of none flutter
+* refine to stats, store
 
 ## 0.2.0
 

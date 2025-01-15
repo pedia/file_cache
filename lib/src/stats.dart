@@ -16,9 +16,9 @@ class CacheStats {
 
   @override
   String toString() {
-    return "Hit(Files): $hitFiles\n"
-        "Bytes(File): $bytesInFile\n"
-        "Bytes Read from File: $bytesRead\n"
-        "Bytes download: $bytesDownload";
+    return 'Hit(Files): $hitFiles\n'
+        'Bytes(File): $bytesInFile\n'
+        'Bytes Read from File: $bytesRead\n'
+        'Bytes download: $bytesDownload';
   }
 }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:file_cache/file_cache.dart';
+import 'package:file_cache/file_cache_flutter.dart';
 
 class FileCacheTestFrame extends StatefulWidget {
   createState() => _FileCacheTestFrameState();
@@ -13,7 +13,7 @@ class _FileCacheTestFrameState extends State<FileCacheTestFrame> {
   initState() {
     super.initState();
 
-    FileCache.fromDefault().then((instance) {
+    FileCacheFlutter.fromDefault().then((instance) {
       fileCache = instance;
     });
   }
@@ -27,17 +27,19 @@ class _FileCacheTestFrameState extends State<FileCacheTestFrame> {
           // load
           ElevatedButton(
             onPressed: () {
-              fileCache?.load('http://httpbin.org/cache/60').then((resp) {
+              fileCache?.load(Uri.parse('http://httpbin.org/cache/60')).then((resp) {
                 setState(() {});
               });
             },
-            child: Text("load an url"),
+            child: Text(""),
           ),
 
           // getJson
           ElevatedButton(
             onPressed: () {
-              fileCache?.getJson('http://httpbin.org/cache/600').then((resp) {
+              fileCache
+                  ?.getJson(Uri.parse('http://httpbin.org/cache/600'))
+                  .then((resp) {
                 setState(() {
                   print(">> got $resp");
                   map = resp;
@@ -48,10 +50,9 @@ class _FileCacheTestFrameState extends State<FileCacheTestFrame> {
                 Text('map: ${map == null ? null : map!["result"][0]["name"]}'),
           ),
 
-          const Image(
+          Image(
               image: FileCacheImage(
-            'https://assets.msn.com/weathermapdata/1/static/background/v2.0/jpg/sunny.jpg',
-            scale: 1.9,
+            'http://httpbin.org/image/jpeg',
           )),
 
           //
@@ -63,9 +64,5 @@ class _FileCacheTestFrameState extends State<FileCacheTestFrame> {
 }
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  final fileCache = await FileCache.fromDefault();
-  print(fileCache.path);
   runApp(MaterialApp(home: FileCacheTestFrame()));
 }
