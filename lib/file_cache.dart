@@ -79,6 +79,4 @@ class FileCache {
   Future<void> clean() => _fileStore.clean();
 
   Future<void> scan() => _fileStore.scan();
-
-  
 }
