@@ -4,7 +4,7 @@ import 'package:file_cache/file_cache.dart';
 
 void main() {
   test('getJson', () async {
-    final fileCache = FileCache.from(path: "cache3");
+    final fileCache = FileCache(path: "cache3");
 
     await fileCache.clean();
 
@@ -16,7 +16,7 @@ void main() {
   });
 
   test('scan', () async {
-    final fileCache = FileCache.from(path: "cache3");
+    final fileCache = FileCache(path: "cache3");
 
     Map map =
         await fileCache.getJson(Uri.parse('https://httpbin.org/cache/600?a=b'));
