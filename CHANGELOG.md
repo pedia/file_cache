@@ -1,3 +1,8 @@
+## 2.0.0
+
+* [break change] refine to `FileCache`(for Dart project), `FileCacheFlutter`
+* expose FileStore for read and write `http.Response`
+
 ## 0.6.0
 
 * [break change] remove memory store
