@@ -1,7 +1,7 @@
 library file_cache;
 
 import 'dart:convert';
-import 'dart:io';
+import 'package:universal_io/io.dart';
 import 'dart:async';
 
 import 'package:http/http.dart' as http;
