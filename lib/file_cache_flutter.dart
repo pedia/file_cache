@@ -23,6 +23,10 @@ class FileCacheFlutter extends FileCache {
     }
     return _instance!;
   }
+
+  factory FileCacheFlutter.upgrade(FileCache fc) {
+    return FileCacheFlutter(path: fc.store.path, fetcher: fc.fetcher);
+  }
 }
 
 class FileCacheImage extends ImageProvider<FileCacheImage> {

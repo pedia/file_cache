@@ -16,7 +16,7 @@ import 'src/stats.dart';
 /// The fetcher function should either return a value synchronously or a
 /// [Future] which completes with the value asynchronously.
 /// Use 'package:http/http.dart' instead 'dart:io'
-typedef FutureOr<http.Response> Fetcher(Uri url);
+typedef FutureOr<http.Response> Fetcher(Uri uri);
 
 Future<http.Response> defaultFetcher(Uri uri) {
   return http.Client().get(uri);
@@ -28,13 +28,30 @@ class FileCache {
     this.fetcher = defaultFetcher,
   }) {
     stats = CacheStats();
-    _fileStore = FileStore(path);
+    store = FileStore(path);
   }
 
   final Fetcher fetcher;
 
   late CacheStats stats;
-  late FileStore _fileStore;
+  late FileStore store;
+
+  Future<http.Response> get(Uri uri) async {
+    var response = await store.read(uri);
+    if (response != null) {
+      stats.hitFiles += 1;
+      stats.bytesRead += response.bodyBytes.length;
+      return response;
+    }
+
+    response = await fetcher(uri);
+
+    if (response.statusCode == HttpStatus.ok) {
+      stats.bytesDownload += response.bodyBytes.length;
+      await store.write(response);
+    }
+    return response;
+  }
 
   Future<Uint8List> getBytes(
     Uri uri, {
@@ -44,7 +61,7 @@ class FileCache {
     Completer<Uint8List> completer = Completer<Uint8List>();
 
     // local file cache
-    var response = await _fileStore.read(uri);
+    var response = await store.read(uri);
     if (response != null) {
       stats.hitFiles += 1;
       stats.bytesRead += response.bodyBytes.length;
@@ -58,7 +75,7 @@ class FileCache {
     if (response.statusCode == HttpStatus.ok) {
       stats.bytesDownload += response.bodyBytes.length;
 
-      await _fileStore.write(response);
+      await store.write(response);
     }
     completer.complete(response.bodyBytes);
     return completer.future;
@@ -72,11 +89,11 @@ class FileCache {
     return encoding.decode(await getBytes(uri, storeEncoding: encoding));
   }
 
-  Future<http.Response?> load(Uri uri) => _fileStore.read(uri);
+  Future<http.Response?> load(Uri uri) => store.read(uri);
 
-  Future<void> remove(Uri uri) => _fileStore.remove(uri);
+  Future<void> remove(Uri uri) => store.remove(uri);
 
-  Future<void> clean() => _fileStore.clean();
+  Future<void> clean() => store.clean();
 
-  Future<void> scan() => _fileStore.scan();
+  Future<void> scan() => store.scan();
 }

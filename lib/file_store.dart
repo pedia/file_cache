@@ -78,7 +78,13 @@ class FileStore {
 
     // read all left
     final body = await f.read(f.lengthSync() - f.positionSync());
-    return http.Response.bytes(body, statusCode, headers: headers);
+    f.closeSync();
+    return http.Response.bytes(
+      body,
+      statusCode,
+      headers: headers,
+      request: http.Request('GET', uri),
+    );
   }
 
   /// Read [File] util char, 10 = '\n'
