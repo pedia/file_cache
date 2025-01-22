@@ -16,10 +16,10 @@ import 'src/stats.dart';
 /// The fetcher function should either return a value synchronously or a
 /// [Future] which completes with the value asynchronously.
 /// Use 'package:http/http.dart' instead 'dart:io'
-typedef FutureOr<http.Response> Fetcher(Uri uri);
+typedef FutureOr<http.Response> Fetcher(Uri uri, {Map<String, String>? headers});
 
-Future<http.Response> defaultFetcher(Uri uri) {
-  return http.Client().get(uri);
+Future<http.Response> defaultFetcher(Uri uri, {Map<String, String>? headers}) {
+  return http.Client().get(uri, headers: headers);
 }
 
 class FileCache {
@@ -36,7 +36,7 @@ class FileCache {
   late CacheStats stats;
   late FileStore store;
 
-  Future<http.Response> get(Uri uri) async {
+  Future<http.Response> get(Uri uri, {Map<String, String>? headers}) async {
     var response = await store.read(uri);
     if (response != null) {
       stats.hitFiles += 1;

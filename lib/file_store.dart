@@ -22,10 +22,7 @@ class FileStore {
   final String path;
   FileStore(this.path);
 
-  String url2path(Uri uri) {
-    final int key = uri.hashCode;
-    return join(path, '${key % 10}', '$key');
-  }
+  String url2path(Uri uri) => join(path, uri.host, uri.hashCode.toString());
 
   Future<void> write(http.Response response, {String? filePath}) async {
     filePath ??= url2path(response.request!.url);
